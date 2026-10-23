@@ -1,566 +1,195 @@
 \documentclass[11pt,a4paper]{article}
 
-% --- Paquetes de idioma y tipografía ---
 \usepackage[utf8]{inputenc}
 \usepackage[spanish,es-nodecimaldot]{babel}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-\usepackage{microtype}
-
-% --- Geometría de página ---
 \usepackage{geometry}
-\geometry{
-    top=2.5cm,
-    bottom=2.5cm,
-    left=2.5cm,
-    right=2.5cm
-}
+\geometry{top=2.5cm, bottom=2.5cm, left=2.5cm, right=2.5cm}
 
-% --- Paquetes matemáticos ---
-\usepackage{amsmath,amssymb,amsfonts,amsthm}
-\usepackage{mathtools}
-
-% --- Gráficos y tablas ---
+\usepackage{amsmath,amssymb}
 \usepackage{graphicx}
 \usepackage{booktabs}
-\usepackage{array}
 \usepackage{float}
-\usepackage{caption}
-\usepackage{subcaption}
-\usepackage{xcolor}
-
-% --- Hipervínculos ---
 \usepackage{hyperref}
-\hypersetup{
-    colorlinks=true,
-    linkcolor=blue!70!black,
-    citecolor=blue!70!black,
-    urlcolor=blue!70!black
-}
-
-% --- Estilo de encabezados ---
-\usepackage{titlesec}
-\titleformat{\section}{\large\bfseries\color{blue!80!black}}{\thesection.}{0.5em}{}
-\titleformat{\subsection}{\normalsize\bfseries\color{black}}{\thesubsection}{0.5em}{}
-\titleformat{\subsubsection}{\small\bfseries\color{gray!40!black}}{\thesubsubsection}{0.5em}{}
+\hypersetup{colorlinks=true, linkcolor=black, urlcolor=blue}
 
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{6pt}
 
-% -------------------------------------------------------------
-% PORTADA / ENCABEZADO
-% -------------------------------------------------------------
 \title{
-    \vspace{-1.5cm}
-    \textbf{Sistemas de Control}\\[0.3em]
-    \large \textbf{Trabajo de Laboratorio Integrador}\\[0.2em]
-    \large Modelado de Sistemas -- Características y Medidas de Desempeño\\[0.5em]
-    \normalsize \textbf{Parte A: Modelado y Análisis Teórico}
+    \vspace{-1.2cm}
+    \textbf{Sistemas de Control}\\
+    \large Trabajo de Laboratorio Integrador: Modelado y Simulación
 }
-\author{\textbf{Tomás Gómez Pizarro}}
-\date{\today}
+\author{Tomás Gómez Pizarro}
+\date{Octubre 2026}
 
 \begin{document}
 
 \maketitle
-\vspace{-1em}
-\hrule
-\vspace{1.5em}
 
-\section{Introducción}
-
-El presente documento corresponde al desarrollo analítico y formal de la \textbf{Parte A (Modelado y Análisis)} del Trabajo de Laboratorio Integrador de la asignatura \textit{Sistemas de Control}. 
-
-El objetivo es modelar matemáticamente una planta electrónica compuesta por tres etapas con amplificadores operacionales: una etapa restadora/comparadora, una primera red de retardo $RC$ con buffer aislador ($\text{Sys}_1$), y una segunda red $RC$ con etapa de ganancia no inversora ($\text{Sys}_2$). Se obtiene la función de transferencia en lazo cerrado $\text{Sys}_f(s)$, se caracterizan los parámetros de segundo orden ($\omega_n$, $\xi$, $\sigma$, $\omega_d$), se deducen formalmente las métricas de desempeño temporal ante entrada en escalón ($PO$, $T_p$, $T_s$, $t_r$), y se analiza el régimen estacionario y el efecto de la ganancia $k$ con componentes comerciales normalizados de la serie E24.
+\section*{Parte A. Modelado y análisis}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.88\textwidth]{figuras/figura_1.png}
-    \caption{Esquema circuital de la planta bajo control con alimentación $\pm 10\text{ V}$.}
-    \label{fig:circuito_planta}
+    \includegraphics[width=0.85\textwidth]{figuras/figura_1.png}
+    \caption{Planta a controlar (alimentación de los operacionales: $\pm 10\text{ V}$).}
+    \label{fig:circuito}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.55\textwidth]{figuras/figura_2.png}
-    \caption{Diagrama de bloques de la planta en lazo cerrado.}
-    \label{fig:diagrama_bloques}
+    \includegraphics[width=0.5\textwidth]{figuras/figura_2.png}
+    \caption{Diagrama de bloques de la planta a controlar.}
+    \label{fig:bloques}
 \end{figure}
 
-% -------------------------------------------------------------
-\section{Punto 1: Modelado Matemático del Sistema}
+\section{Modelado}
 
-\subsection{1.a. Demostración del modelo en diagrama de bloques}
-Demostraremos analíticamente que el circuito de la Figura \ref{fig:circuito_planta} puede representarse fielmente mediante el diagrama de bloques en lazo cerrado de la Figura \ref{fig:diagrama_bloques}, obteniendo la función de transferencia de cada subsistema.
+\subsection{Funciones de transferencia por bloques (Fig. 2)}
+Considerando amplificadores operacionales ideales en zona lineal ($I_+ = I_- = 0$ y $V_+ = V_-$):
 
-\subsubsection{Bloque Resta (Amplificador Operacional $U_{1A}$)}
-Consideremos el amplificador operacional $U_{1A}$ en configuración diferencial/restadora con alimentación bipolar. Bajo la hipótesis de operación en régimen lineal y modelo ideal del op-amp:
-\begin{enumerate}
-    \item La impedancia de entrada es infinita, por lo que las corrientes que ingresan a los terminales inversor y no inversor son nulas: $I_+ = 0$, $I_- = 0$.
-    \item La ganancia a lazo abierto tiende a infinito ($A \to \infty$), por lo que la realimentación negativa garantiza el cortocircuito virtual: $V_+ = V_-$.
-\end{enumerate}
+\paragraph{Bloque Resta ($U_{1A}$):}
+En el terminal no inversor tenemos un divisor resistivo entre $R_3$ y $R_8$ ($R_3 = R_8 = 1\text{ k}\Omega$):
+\begin{equation}
+    V_+ = V_{\text{Entrada}} \frac{R_8}{R_3 + R_8} = \frac{1}{2} V_{\text{Entrada}}
+\end{equation}
+En el nodo inversor, planteando corrientes con $R_4 = R_5 = 1\text{ k}\Omega$:
+\begin{equation}
+    \frac{V_{\text{Salida}} - V_-}{R_4} + \frac{V_{\text{resta}} - V_-}{R_5} = 0 \implies V_- = \frac{V_{\text{Salida}} + V_{\text{resta}}}{2}
+\end{equation}
+Igualando $V_+ = V_-$ resulta:
+\begin{equation}
+    V_{\text{resta}}(s) = V_{\text{Entrada}}(s) - V_{\text{Salida}}(s)
+\end{equation}
+Por lo tanto, la etapa con $U_{1A}$ implementa el restador unitario de entrada del lazo.
 
-Para el nodo no inversor $(+)$, la entrada $V_{\text{Entrada}}$ se conecta mediante $R_3$ y la resistencia $R_8$ conecta dicho nodo a masa. Dado que $I_+ = 0$, se forma un divisor de tensión:
+\paragraph{Bloque $\text{Sys}_1$ ($R_1$, $C_1$ y $U_{3A}$):}
+La red $R_1 C_1$ forma un divisor de impedancias a la entrada no inversora de $U_{3A}$. Como $I_+ = 0$:
 \begin{equation}
-    V_+ = V_{\text{Entrada}} \cdot \frac{R_8}{R_3 + R_8}
+    V_{+,U3A}(s) = \frac{\frac{1}{sC_1}}{R_1 + \frac{1}{sC_1}} V_{\text{resta}}(s) = \frac{1}{R_1 C_1 s + 1} V_{\text{resta}}(s)
 \end{equation}
-Con $R_3 = 1\text{ k}\Omega$ y $R_8 = 1\text{ k}\Omega$:
+El operacional $U_{3A}$ está conectado como seguidor de tensión ($V_{\text{out},U3A} = V_{+,U3A}$), por lo que con $R_1 = 100\text{ k}\Omega$ y $C_1 = 0,1\,\mu\text{F}$ ($\tau_1 = R_1 C_1 = 0,01\text{ s}$):
 \begin{equation}
-    V_+ = V_{\text{Entrada}} \cdot \frac{1\text{ k}\Omega}{1\text{ k}\Omega + 1\text{ k}\Omega} = \frac{1}{2} V_{\text{Entrada}}
-\end{equation}
-
-Para el nodo inversor $(-)$, aplicando la Ley de Corrientes de Kirchhoff (KCL):
-\begin{equation}
-    \frac{V_{\text{Salida}} - V_-}{R_4} + \frac{V_{\text{resta}} - V_-}{R_5} = 0
-\end{equation}
-donde $V_{\text{resta}}$ es la tensión a la salida de $U_{1A}$. Con $R_4 = 1\text{ k}\Omega$ y $R_5 = 1\text{ k}\Omega$:
-\begin{equation}
-    V_{\text{Salida}} - V_- + V_{\text{resta}} - V_- = 0 \implies V_- = \frac{V_{\text{resta}} + V_{\text{Salida}}}{2}
-\end{equation}
-Igualando $V_+ = V_-$ en virtud del cortocircuito virtual:
-\begin{equation}
-    \frac{1}{2} V_{\text{Entrada}} = \frac{V_{\text{resta}} + V_{\text{Salida}}}{2} \implies V_{\text{resta}} = V_{\text{Entrada}} - V_{\text{Salida}}
-\end{equation}
-Transformando al dominio de Laplace, la salida de $U_{1A}$ es exactamente la señal de error:
-\begin{equation}
-    E(s) = V_{\text{resta}}(s) = V_{\text{Entrada}}(s) - V_{\text{Salida}}(s)
-\end{equation}
-Esto demuestra que el bloque $U_{1A}$ implementa con precisión el comparador o nodo suma/resta con realimentación negativa unitaria.
-
-\subsubsection{Bloque $\text{Sys}_1$ ($R_1$, $C_1$ y buffer $U_{3A}$)}
-La señal de entrada a este bloque es $V_{\text{resta}}(s) = E(s)$. La red pasiva conformada por $R_1$ y $C_1$ tiene una impedancia capacitiva $Z_{C1}(s) = \frac{1}{s C_1}$. La entrada no inversora de $U_{3A}$ no consume corriente ($I_+ = 0$), por lo que:
-\begin{equation}
-    V_{+, U3A}(s) = V_{\text{resta}}(s) \cdot \frac{\frac{1}{s C_1}}{R_1 + \frac{1}{s C_1}} = \frac{1}{R_1 C_1 s + 1} V_{\text{resta}}(s)
-\end{equation}
-El amplificador operacional $U_{3A}$ está en configuración de seguidor de tensión (buffer) con realimentación a través de $R_6$. Por cortocircuito virtual y al ser $I_- = 0$ (sin caída en $R_6$), se tiene $V_{\text{out}, U3A}(s) = V_{+, U3A}(s)$.
-
-Por consiguiente, la función de transferencia de $\text{Sys}_1$ resulta:
-\begin{equation}
-    \text{Sys}_1(s) = \frac{V_{\text{out}, U3A}(s)}{V_{\text{resta}}(s)} = \frac{1}{R_1 C_1 s + 1}
-\end{equation}
-Definiendo la constante de tiempo $\tau_1 = R_1 C_1$:
-\begin{equation}
-    \tau_1 = 100\text{ k}\Omega \cdot 0.1\,\mu\text{F} = 10^5\,\Omega \cdot 10^{-7}\text{ F} = 0.01\text{ s} = 10\text{ ms}
-\end{equation}
-\begin{equation}
-    \text{Sys}_1(s) = \frac{1}{0.01 s + 1} = \frac{100}{s + 100}
+    \text{Sys}_1(s) = \frac{1}{R_1 C_1 s + 1} = \frac{1}{0,01 s + 1}
 \end{equation}
 
-\subsubsection{Bloque $\text{Sys}_2$ ($R_2$, $C_2$ y etapa no inversora $U_{2A}$)}
-La señal que ingresa a $\text{Sys}_2$ es la salida del buffer $V_{\text{out}, U3A}(s)$. La red formada por $R_2$ y $C_2$ constituye otro filtro pasa-bajos. Como la entrada no inversora de $U_{2A}$ no toma corriente:
+\paragraph{Bloque $\text{Sys}_2$ ($R_2$, $C_2$ y $U_{2A}$):}
+De manera análoga, la red $R_2 C_2$ en la entrada no inversora de $U_{2A}$ cumple:
 \begin{equation}
-    V_{+, U2A}(s) = V_{\text{out}, U3A}(s) \cdot \frac{\frac{1}{s C_2}}{R_2 + \frac{1}{s C_2}} = \frac{1}{R_2 C_2 s + 1} V_{\text{out}, U3A}(s)
+    V_{+,U2A}(s) = \frac{1}{R_2 C_2 s + 1} V_{\text{out},U3A}(s)
 \end{equation}
-El amplificador operacional $U_{2A}$ está en configuración de amplificador no inversor con resistencias de realimentación $R_7$ y $R_9$. Aplicando KCL en el nodo inversor $(-)$:
+El operacional $U_{2A}$ está en configuración no inversora con ganancia $k = 1 + \frac{R_7}{R_9}$. Con $R_2 = 47\text{ k}\Omega$, $C_2 = 0,1\,\mu\text{F}$ ($\tau_2 = R_2 C_2 = 0,0047\text{ s}$) y $k = 1 + \frac{10\text{ k}\Omega}{1\text{ k}\Omega} = 11$:
 \begin{equation}
-    \frac{0 - V_-}{R_9} + \frac{V_{\text{Salida}} - V_-}{R_7} = 0 \implies V_- = V_{\text{Salida}} \cdot \frac{R_9}{R_7 + R_9}
+    \text{Sys}_2(s) = \frac{k}{R_2 C_2 s + 1} = \frac{k}{0,0047 s + 1}
 \end{equation}
-Por cortocircuito virtual ($V_+ = V_-$):
+Como el seguidor $U_{3A}$ desacopla ambas etapas, el camino directo es el producto $\text{Sys}_1(s) \cdot \text{Sys}_2(s)$ y el circuito queda representado por el diagrama de bloques de la Fig. \ref{fig:bloques}.
+
+\subsection{Función de transferencia en lazo cerrado $\text{Sys}_f(s)$}
+Para el lazo con realimentación negativa unitaria, siendo $G(s) = \text{Sys}_1(s)\text{Sys}_2(s)$:
 \begin{equation}
-    V_{\text{Salida}}(s) = \left( 1 + \frac{R_7}{R_9} \right) V_{+, U2A}(s)
+    \text{Sys}_f(s) = \frac{\text{Salida}(s)}{\text{Entrada}(s)} = \frac{G(s)}{1 + G(s)} = \frac{k}{(\tau_1 s + 1)(\tau_2 s + 1) + k}
 \end{equation}
-Definiendo la ganancia de la etapa no inversora como:
+Desarrollando el denominador y dividiendo por $\tau_1 \tau_2$:
 \begin{equation}
-    k = 1 + \frac{R_7}{R_9}
+    \text{Sys}_f(s) = \frac{\dfrac{k}{\tau_1 \tau_2}}{s^2 + \left(\dfrac{1}{\tau_1} + \dfrac{1}{\tau_2}\right)s + \dfrac{1 + k}{\tau_1 \tau_2}}
 \end{equation}
-se obtiene:
+Reemplazando $\tau_1 = 0,01\text{ s}$, $\tau_2 = 0,0047\text{ s}$ y $k = 11$:
 \begin{equation}
-    V_{\text{Salida}}(s) = \frac{k}{R_2 C_2 s + 1} V_{\text{out}, U3A}(s)
-\end{equation}
-Por ende, la función de transferencia de $\text{Sys}_2$ es:
-\begin{equation}
-    \text{Sys}_2(s) = \frac{V_{\text{Salida}}(s)}{V_{\text{out}, U3A}(s)} = \frac{k}{R_2 C_2 s + 1}
-\end{equation}
-Definiendo la constante de tiempo $\tau_2 = R_2 C_2$:
-\begin{equation}
-    \tau_2 = 47\text{ k}\Omega \cdot 0.1\,\mu\text{F} = 4.7 \times 10^4\,\Omega \cdot 10^{-7}\text{ F} = 4.7 \times 10^{-3}\text{ s} = 4.7\text{ ms}
-\end{equation}
-\begin{equation}
-    p_2 = \frac{1}{\tau_2} = \frac{1}{0.0047} = \frac{10000}{47} \approx 212.766\text{ rad/s}
-\end{equation}
-\begin{equation}
-    \text{Sys}_2(s) = \frac{k}{0.0047 s + 1} = \frac{212.766\,k}{s + 212.766}
-\end{equation}
-Para los valores de la Figura \ref{fig:circuito_planta} ($R_7 = 10\text{ k}\Omega$, $R_9 = 1\text{ k}\Omega$):
-\begin{equation}
-    k = 1 + \frac{10\text{ k}\Omega}{1\text{ k}\Omega} = 11
+    \text{Sys}_f(s) = \frac{234042,55}{s^2 + 312,77\,s + 255319,15}
 \end{equation}
 
-\subsubsection{Conclusión del Modelado}
-Debido a que el seguidor $U_{3A}$ posee impedancia de entrada infinita y de salida nula, desacopla completamente las dinámicas de $\text{Sys}_1$ y $\text{Sys}_2$. No existe efecto de carga mutua entre ambas etapas pasivas. En consecuencia, la función de transferencia de la planta en lazo abierto es el producto en cascada directo:
-\begin{equation}
-    G(s) = \text{Sys}_1(s) \cdot \text{Sys}_2(s) = \frac{k}{(R_1 C_1 s + 1)(R_2 C_2 s + 1)}
-\end{equation}
-La salida $V_{\text{Salida}}$ se realimenta negativamente a la entrada inversora del comparador $U_{1A}$, cerrando el lazo unitario de forma idéntica a la Figura \ref{fig:diagrama_bloques}. Con esto queda formalmente demostrada la validez del modelo.
-
-% -------------------------------------------------------------
-\subsection{1.b. Función de transferencia del sistema realimentado $\text{Sys}_f(s)$}
-La función de transferencia a lazo cerrado entre la entrada y la salida se obtiene a partir de la relación clásica de realimentación unitaria:
-\begin{equation}
-    \text{Sys}_f(s) = \frac{V_{\text{Salida}}(s)}{V_{\text{Entrada}}(s)} = \frac{G(s)}{1 + G(s)}
-\end{equation}
-Sustituyendo $G(s)$:
-\begin{equation}
-    \text{Sys}_f(s) = \frac{\frac{k}{(R_1 C_1 s + 1)(R_2 C_2 s + 1)}}{1 + \frac{k}{(R_1 C_1 s + 1)(R_2 C_2 s + 1)}} = \frac{k}{(R_1 C_1 s + 1)(R_2 C_2 s + 1) + k}
-\end{equation}
-Desarrollando el polinomio denominador:
-\begin{equation}
-    D(s) = R_1 C_1 R_2 C_2 s^2 + (R_1 C_1 + R_2 C_2) s + (1 + k) = \tau_1 \tau_2 s^2 + (\tau_1 + \tau_2) s + (1 + k)
-\end{equation}
-Dividiendo numerador y denominador por el término principal $\tau_1 \tau_2 = R_1 C_1 R_2 C_2$, se obtiene la forma canónica mónica:
-\begin{equation}
-    \text{Sys}_f(s) = \frac{\dfrac{k}{\tau_1 \tau_2}}{s^2 + \left( \dfrac{1}{\tau_1} + \dfrac{1}{\tau_2} \right) s + \dfrac{1 + k}{\tau_1 \tau_2}}
-\end{equation}
-
-Sustituyendo los valores numéricos de los componentes:
-\begin{itemize}
-    \item $\tau_1 \tau_2 = 0.01 \cdot 0.0047 = 4.7 \times 10^{-5}\text{ s}^2$
-    \item $\dfrac{1}{\tau_1 \tau_2} = \dfrac{10^6}{47} \approx 21276.596\text{ rad}^2/\text{s}^2$
-    \item $\dfrac{1}{\tau_1} + \dfrac{1}{\tau_2} = 100 + \dfrac{10000}{47} = \dfrac{14700}{47} \approx 312.766\text{ rad/s}$
-    \item Con $k = 11$:
-    \begin{align}
-        \dfrac{1 + k}{\tau_1 \tau_2} &= \frac{12}{4.7 \times 10^{-5}} = \frac{12 \times 10^6}{47} \approx 255319.149\text{ rad}^2/\text{s}^2 \\
-        \dfrac{k}{\tau_1 \tau_2} &= \frac{11}{4.7 \times 10^{-5}} = \frac{11 \times 10^6}{47} \approx 234042.553\text{ rad}^2/\text{s}^2
-    \end{align}
-\end{itemize}
-
-Por lo tanto, la función de transferencia en lazo cerrado para los valores nominales es:
-\begin{equation}
-    \boxed{\text{Sys}_f(s) = \frac{234042.55}{s^2 + 312.77 s + 255319.15}}
-\end{equation}
-O en su representación fraccionaria exacta:
-\begin{equation}
-    \text{Sys}_f(s) = \frac{11 \times 10^6}{47 s^2 + 14700 s + 12 \times 10^6}
-\end{equation}
-
-% -------------------------------------------------------------
-\subsection{1.c. Parámetros $\omega_n$ y $\xi$ para $\text{Sys}_f$ e influencia de $k$}
-La forma estándar normalizada de un sistema de segundo orden es:
-\begin{equation}
-    \text{Sys}_f(s) = K_{CL} \frac{\omega_n^2}{s^2 + 2 \xi \omega_n s + \omega_n^2}
-\end{equation}
-Igualando coeficientes del denominador con la expresión analítica obtenida:
+\subsection{Parámetros $\omega_n$ y $\xi$, e influencia de $k$}
+Comparando el denominador con la forma canónica $s^2 + 2\xi\omega_n s + \omega_n^2$:
 \begin{align}
-    \omega_n^2 &= \frac{1 + k}{\tau_1 \tau_2} \implies \boxed{\omega_n = \sqrt{\frac{1 + k}{\tau_1 \tau_2}}} \label{eq:wn}\\
-    2 \xi \omega_n &= \frac{1}{\tau_1} + \frac{1}{\tau_2} \implies \boxed{\xi = \frac{\tau_1 + \tau_2}{2 \sqrt{(1 + k)\tau_1 \tau_2}}} \label{eq:xi}
+    \omega_n &= \sqrt{\frac{1+k}{\tau_1 \tau_2}} = \sqrt{255319,15} \approx 505,29\text{ rad/s} \\
+    \xi &= \frac{1/\tau_1 + 1/\tau_2}{2\omega_n} = \frac{312,77}{2 \cdot 505,29} \approx 0,3095
 \end{align}
+\textbf{Influencia de $k$:} Al aumentar $k$, la frecuencia natural $\omega_n$ aumenta ($\propto \sqrt{1+k}$), haciendo más rápida la respuesta inicial, mientras que el amortiguamiento $\xi$ disminuye ($\propto 1/\sqrt{1+k}$), provocando mayores oscilaciones y un mayor sobrepaso ($PO$). Sin embargo, la atenuación $\sigma = \xi\omega_n = \frac{1}{2}\left(\frac{1}{\tau_1} + \frac{1}{\tau_2}\right) = 156,38\text{ s}^{-1}$ no depende de $k$, por lo que el tiempo de establecimiento $T_s$ se mantiene prácticamente constante. Además, un mayor $k$ acerca la ganancia estacionaria $\frac{k}{1+k}$ a $1$, reduciendo el error permanente.
 
-Evaluando para el caso nominal ($k = 11$, $\tau_1 = 0.01\text{ s}$, $\tau_2 = 0.0047\text{ s}$):
-\begin{equation}
-    \omega_n = \sqrt{255319.149} \approx 505.291\text{ rad/s}
-\end{equation}
-\begin{equation}
-    \xi = \frac{312.766}{2 \cdot 505.291} \approx 0.309485 \approx 0.3095
-\end{equation}
-
-Dado que $0 < \xi < 1$, el sistema en lazo cerrado es \textbf{subamortiguado}. Sus polos son complejos conjugados:
-\begin{equation}
-    s_{1,2} = -\xi \omega_n \pm j \omega_d = -\sigma \pm j \omega_d
-\end{equation}
-donde:
+\subsection{Función de $R_6$ y del seguidor $U_{3A}$}
 \begin{itemize}
-    \item $\sigma = \xi \omega_n = \dfrac{1}{2} \left( \dfrac{1}{\tau_1} + \dfrac{1}{\tau_2} \right) = \dfrac{312.766}{2} = 156.383\text{ s}^{-1}$
-    \item $\omega_d = \omega_n \sqrt{1 - \xi^2} = 505.291 \sqrt{1 - 0.3095^2} \approx 480.481\text{ rad/s}$
-\end{itemize}
-\begin{equation}
-    s_{1,2} = -156.38 \pm j 480.48\text{ s}^{-1}
-\end{equation}
-
-\subsubsection{¿Influye $k$ en la respuesta del sistema?}
-\textbf{Sí, $k$ tiene una influencia determinante en la respuesta temporal y en frecuencia del sistema}:
-\begin{enumerate}
-    \item \textbf{Frecuencia natural $\omega_n$:} De la Ec. \eqref{eq:wn}, $\omega_n \propto \sqrt{1+k}$. Al aumentar $k$, $\omega_n$ crece, lo cual incrementa el ancho de banda del sistema y acelera la respuesta transitoria.
-    \item \textbf{Factor de amortiguamiento $\xi$:} De la Ec. \eqref{eq:xi}, $\xi \propto \dfrac{1}{\sqrt{1+k}}$. Al aumentar $k$, $\xi$ disminuye monótonamente, reduciendo el margen de estabilidad y provocando un comportamiento \textbf{mucho más oscilatorio con mayor sobrepaso porcentual ($PO$)}.
-    \item \textbf{Decaimiento envolvente $\sigma = \xi \omega_n$:} Notar que el producto:
+    \item \textbf{Resistencia $R_6$:} En la práctica los operacionales reales no son perfectamente ideales y tienen pequeñas corrientes internas en sus entradas; $R_6$ se coloca para balancear esas imperfecciones y evitar tensiones de desbalance (\textit{offset}) a la salida. En el análisis teórico, como asumimos un operacional ideal donde no entra corriente ($I_- = 0$), en $R_6$ no hay caída de tensión ($\Delta V_{R_6} = 0$), por lo que $V_- = V_{\text{out},U3A}$ y no afecta la función de transferencia.
+    \item \textbf{Seguidor $U_{3A}$ y efecto de suprimirlo:} Su función es aislar ambas etapas (\textit{buffer}). Como tiene impedancia de entrada casi infinita y de salida nula, evita que la segunda red $R_2 C_2$ le robe corriente al capacitor $C_1$ (efecto de carga), permitiendo que la transferencia sea simplemente el producto $\text{Sys}_1(s) \cdot \text{Sys}_2(s)$. Si elimináramos $U_{3A}$ conectando $R_2$ directamente sobre $C_1$, las dos redes interactuarían entre sí y aparecería un término cruzado $R_1 C_2 s$ en el denominador:
     \begin{equation}
-        \sigma = \xi \omega_n = \frac{1}{2} \left( \frac{1}{\tau_1} + \frac{1}{\tau_2} \right) = 156.383\text{ s}^{-1}
+        G_{\text{sin buffer}}(s) = \frac{k}{\tau_1 \tau_2 s^2 + (\tau_1 + \tau_2 + R_1 C_2)s + 1}
     \end{equation}
-    es \textbf{estrictamente independiente de $k$}. Geométricamente en el plano complejo $s$, la variación de $k$ genera un lugar de raíces donde los polos se mueven verticalmente a lo largo de la recta vertical $\text{Re}(s) = -\sigma = -156.38$, aumentando la componente imaginaria $\omega_d$ a medida que $k$ crece.
-    \item \textbf{Ganancia en estado estacionario y error:} La ganancia de continua a lazo cerrado es $K_{CL} = \text{Sys}_f(0) = \dfrac{k}{1+k}$. A mayor $k$, $K_{CL}$ se aproxima a 1, disminuyendo el error estacionario de posición ($e_{ss} = \dfrac{1}{1+k}$).
-\end{enumerate}
-
-% -------------------------------------------------------------
-\subsection{1.d. Función de $R_6$, seguidor $U_{3A}$ y efecto de supresión}
-
-\subsubsection{Función de $R_6$ y por qué no aparece en la función de transferencia}
-\begin{itemize}
-    \item \textbf{Función circuital:} En circuitos prácticos basados en amplificadores operacionales, la resistencia de realimentación $R_6$ en el lazo seguidor se introduce para equilibrar las resistencias equivalentes de Thévenin vistas desde ambas entradas ($R_{\text{th}+} \approx R_{\text{th}-}$). De este modo, las caídas de tensión generadas por las corrientes de polarización de entrada del integrado ($I_{\text{bias}}$) se igualan en ambos terminales y se cancelan en modo común, minimizando el voltaje de desbalance (\textit{input offset voltage}) en la salida.
-    \item \textbf{Por qué no aparece en la función de transferencia:} Bajo el modelo de amplificador operacional ideal (o en pequeña señal en régimen lineal), la corriente que entra por el terminal inversor es idénticamente nula ($I_- = 0$). Como no circula corriente a través de $R_6$, la caída óhmica es cero:
-    \begin{equation}
-        \Delta V_{R_6} = I_- \cdot R_6 = 0 \cdot R_6 = 0\text{ V} \implies V_- = V_{\text{out}, U3A}
-    \end{equation}
-    Al no existir caída de tensión, el potencial del nodo inversor es siempre idéntico a la tensión de salida. Por ende, $R_6$ no interviene en las ecuaciones algebraicas de transferencia del sistema.
+    lo que correría los polos de la planta, volviendo al sistema más lento y cambiando su amortiguamiento.
 \end{itemize}
 
-\subsubsection{Función del seguidor de tensión $U_{3A}$}
-El amplificador $U_{3A}$ opera como una \textbf{etapa de adaptación y aislamiento de impedancias} (\textit{buffer}). Posee una impedancia de entrada prácticamente infinita ($R_{\text{in}} \to \infty$) y una impedancia de salida casi nula ($R_{\text{out}} \approx 0$). Su función esencial es evitar que la etapa siguiente ($\text{Sys}_2$, que comienza con la resistencia $R_2$) tome corriente del capacitor $C_1$, eliminando el fenómeno de carga (\textit{loading effect}) y garantizando que ambas dinámicas permanezcan completamente desacopladas.
-
-\subsubsection{¿Qué ocurriría si se eliminara $U_{3A}$ conectando $R_2$ directamente sobre $C_1$?}
-Si se suprime $U_{3A}$, la resistencia $R_2$ se conectaría en paralelo con el capacitor $C_1$, formando una red pasiva de dos mallas interactuantes. Analicemos el circuito resultante escribiendo las leyes de Kirchhoff nodales:
-\begin{align}
-    \text{Nodo } V_{C1}: \quad &\frac{V_{\text{in}} - V_{C1}}{R_1} = s C_1 V_{C1} + \frac{V_{C1} - V_{C2}}{R_2} \\
-    \text{Nodo } V_{C2}: \quad &\frac{V_{C1} - V_{C2}}{R_2} = s C_2 V_{C2}
-\end{align}
-De la segunda ecuación, $V_{C1} = (1 + s R_2 C_2) V_{C2}$. Sustituyendo en la primera y resolviendo:
+\section{Respuesta al escalón de $\text{Sys}_f$ ($k = 11$)}
+Como el sistema es subamortiguado ($\xi = 0,3095 < 1$), su frecuencia amortiguada es $\omega_d = \omega_n\sqrt{1 - \xi^2} \approx 480,48\text{ rad/s}$ y el ángulo de fase es $\beta = \arccos(\xi) \approx 1,256\text{ rad}$. Ante una entrada en escalón unitario ($1\text{ V}$), la respuesta temporal analítica es:
 \begin{equation}
-    \frac{V_{C2}(s)}{V_{\text{in}}(s)} = \frac{1}{R_1 C_1 R_2 C_2 s^2 + (R_1 C_1 + R_2 C_2 + \mathbf{R_1 C_2}) s + 1}
+    y(t) = y(\infty)\left[1 - \frac{e^{-\xi\omega_n t}}{\sqrt{1 - \xi^2}}\sin(\omega_d t + \beta)\right] = 0,9167\left[1 - 1,0516\,e^{-156,38\,t}\sin(480,48\,t + 1,256)\right]\text{ V}
 \end{equation}
-Comparando con la planta original con buffer:
-\begin{equation}
-    \frac{V_{\text{in}}(s)}{V_{C2}(s)}\Bigg|_{\text{con buffer}} = (R_1 C_1 s + 1)(R_2 C_2 s + 1) = R_1 C_1 R_2 C_2 s^2 + (R_1 C_1 + R_2 C_2) s + 1
-\end{equation}
-Aparece el término adicional cruzado de interacción $\mathbf{R_1 C_2 s}$:
-\begin{equation}
-    R_1 C_2 = 100\text{ k}\Omega \cdot 0.1\,\mu\text{F} = 10\text{ ms}
-\end{equation}
-El coeficiente del término lineal pasaría de:
-\begin{equation}
-    \tau_1 + \tau_2 = 10\text{ ms} + 4.7\text{ ms} = 14.7\text{ ms} \quad \longrightarrow \quad \tau_1 + \tau_2 + R_1 C_2 = 24.7\text{ ms} \quad (+68\%)
-\end{equation}
-\textbf{Efectos prácticos:}
-\begin{enumerate}
-    \item Los polos de la planta en lazo abierto se desplazan fuertemente sobre el eje real (se alejan entre sí, volviendo a la planta considerablemente más lenta).
-    \item Las dos etapas ya no se pueden diseñar ni modelar de forma modular e independiente como $\text{Sys}_1(s) \cdot \text{Sys}_2(s)$.
-    \item En lazo cerrado, la amortiguación del sistema y las frecuencias de resonancia se verían totalmente modificadas, alterando por completo las métricas de sobrepaso y tiempo de establecimiento.
-\end{enumerate}
-
-% -------------------------------------------------------------
-\section{Punto 2: Respuesta al Escalón de $\text{Sys}_f$ y Parámetros Temporales}
-
-\subsection{Deducción matemática analítica de la respuesta temporal}
-Para una entrada en escalón unitario $r(t) = u(t) \iff R(s) = \frac{1}{s}$, la transformada de Laplace de la salida es:
-\begin{equation}
-    Y(s) = \text{Sys}_f(s) \cdot \frac{1}{s} = \frac{k}{(1+k)} \cdot \frac{\omega_n^2}{s (s^2 + 2\xi \omega_n s + \omega_n^2)}
-\end{equation}
-Expandiendo en fracciones simples para el caso subamortiguado ($0 < \xi < 1$):
-\begin{equation}
-    \frac{\omega_n^2}{s (s^2 + 2\xi \omega_n s + \omega_n^2)} = \frac{1}{s} - \frac{s + 2\xi \omega_n}{(s + \xi \omega_n)^2 + \omega_d^2} = \frac{1}{s} - \frac{s + \xi \omega_n}{(s + \xi \omega_n)^2 + \omega_d^2} - \frac{\xi}{\sqrt{1-\xi^2}} \frac{\omega_d}{(s + \xi \omega_n)^2 + \omega_d^2}
-\end{equation}
-Aplicando la transformada inversa de Laplace $\mathcal{L}^{-1}$:
-\begin{equation}
-    y(t) = y(\infty) \left[ 1 - e^{-\xi \omega_n t} \left( \cos(\omega_d t) + \frac{\xi}{\sqrt{1-\xi^2}} \sin(\omega_d t) \right) \right]
-\end{equation}
-Definiendo el ángulo $\beta = \arccos(\xi) = \arctan\left( \frac{\sqrt{1-\xi^2}}{\xi} \right)$, se sintetiza en la expresión canónica:
-\begin{equation}
-    \boxed{y(t) = y(\infty) \left[ 1 - \frac{e^{-\xi \omega_n t}}{\sqrt{1 - \xi^2}} \sin(\omega_d t + \beta) \right] u(t)}
-\end{equation}
-
-\subsection{Cálculo de los parámetros de desempeño temporal}
-
-\subsubsection{Valor final en estado estacionario $y(\infty)$}
-Por el teorema del valor final:
-\begin{equation}
-    y(\infty) = \lim_{s \to 0} s Y(s) = \lim_{s \to 0} \text{Sys}_f(s) = \frac{k}{1+k} = \frac{11}{12} \approx \mathbf{0.9167\text{ V}}
-\end{equation}
-
-\subsubsection{Tiempo de pico $T_p$}
-El tiempo de pico es el instante en el que la respuesta alcanza su máximo valor absoluto. Derivando $y(t)$ e igualando a cero:
-\begin{equation}
-    \frac{dy(t)}{dt} = y(\infty) \frac{\omega_n}{\sqrt{1-\xi^2}} e^{-\xi \omega_n t} \sin(\omega_d t) = 0 \implies \sin(\omega_d t) = 0
-\end{equation}
-El primer pico ocurre en $\omega_d t = \pi$:
-\begin{equation}
-    \boxed{T_p = \frac{\pi}{\omega_d} = \frac{\pi}{\omega_n \sqrt{1 - \xi^2}}}
-\end{equation}
-Con los valores numéricos:
-\begin{equation}
-    T_p = \frac{\pi}{480.481\text{ rad/s}} \approx \mathbf{6.538\text{ ms}} = 0.00654\text{ s}
-\end{equation}
-
-\subsubsection{Sobrepaso porcentual $PO$ (\textit{Percent Overshoot})}
-Evaluando la salida en $t = T_p$:
-\begin{equation}
-    y(T_p) = y(\infty) \left[ 1 - \frac{e^{-\xi \omega_n (\pi / \omega_d)}}{\sqrt{1-\xi^2}} \sin(\pi + \beta) \right] = y(\infty) \left[ 1 + e^{-\frac{\pi \xi}{\sqrt{1-\xi^2}}} \right]
-\end{equation}
-El valor del pico máximo es:
-\begin{equation}
-    y_{\text{max}} = 0.9167 \times (1 + 0.3597) \approx \mathbf{1.2464\text{ V}}
-\end{equation}
-El sobrepaso relativo porcentual se calcula respecto al valor de estado estacionario:
-\begin{equation}
-    \boxed{PO = \frac{y_{\text{max}} - y(\infty)}{y(\infty)} \times 100\% = 100\% \cdot e^{-\frac{\pi \xi}{\sqrt{1-\xi^2}}}}
-\end{equation}
-Con $\xi = 0.309485$:
-\begin{equation}
-    \frac{\pi \xi}{\sqrt{1-\xi^2}} = \frac{\pi \cdot 0.309485}{\sqrt{1 - 0.309485^2}} = \frac{0.97229}{0.95090} \approx 1.02249
-\end{equation}
-\begin{equation}
-    PO = 100\% \cdot e^{-1.02249} \approx \mathbf{35.97\%}
-\end{equation}
-
-\subsubsection{Tiempo de establecimiento $T_s$ (Criterio del $2\%$)}
-El tiempo de establecimiento se define como el tiempo a partir del cual la salida permanece dentro de una banda del $\pm 2\%$ alrededor del valor final $y(\infty)$.
-Analíticamente, considerando la envolvente exponencial $e^{-\xi \omega_n t} = 0.02$:
-\begin{equation}
-    \boxed{T_s (2\%) \approx \frac{4}{\xi \omega_n} = \frac{4}{\sigma}}
-\end{equation}
-Con $\sigma = \xi \omega_n = 156.383\text{ s}^{-1}$:
-\begin{equation}
-    T_s (2\%) \approx \frac{4}{156.383} \approx \mathbf{25.58\text{ ms}} = 0.0256\text{ s}
-\end{equation}
-(La simulación temporal numérica exacta de la forma de onda da $T_s = 22.17\text{ ms}$, ya que la oscilación sinusoidal entra a la banda antes del límite superior de la envolvente pura).
-
-\subsubsection{Tiempo de subida $t_r$ (\textit{Rise Time})}
-Existen dos definiciones estándares:
+Los parámetros principales de desempeño son:
 \begin{itemize}
-    \item \textbf{Tiempo para alcanzar el $100\%$ del valor final por primera vez:} Resolviendo $y(t_r) = y(\infty) \implies \sin(\omega_d t_r + \beta) = 0 \implies \omega_d t_r + \beta = \pi$:
+    \item \textbf{Valor en estado estacionario:}
     \begin{equation}
-        t_r = \frac{\pi - \beta}{\omega_d}
+        y(\infty) = \lim_{s \to 0} \text{Sys}_f(s) = \frac{k}{1+k} = \frac{11}{12} \approx 0,9167\text{ V}
     \end{equation}
-    Con $\beta = \arccos(0.3095) = 1.256\text{ rad}$:
+    \item \textbf{Sobrepaso porcentual ($PO$):}
     \begin{equation}
-        t_r = \frac{\pi - 1.256}{480.481} = \frac{1.8856}{480.481} \approx \mathbf{3.924\text{ ms}}
+        PO = 100 \cdot e^{-\frac{\pi\xi}{\sqrt{1-\xi^2}}} \approx 35,97\% \quad \left(y_{\max} = y(\infty)(1 + PO/100) \approx 1,246\text{ V}\right)
     \end{equation}
-    \item \textbf{Tiempo de subida del $10\%$ al $90\%$ del valor final:}
-    Calculado numéricamente a partir de la respuesta temporal:
+    \item \textbf{Tiempo de pico ($T_p$):}
     \begin{equation}
-        t_{r(10\%-90\%)} \approx \mathbf{3.58\text{ ms}}
+        T_p = \frac{\pi}{\omega_d} = \frac{\pi}{480,48} \approx 6,54\text{ ms}
+    \end{equation}
+    \item \textbf{Tiempo de establecimiento ($T_s$, criterio del $2\%$):}
+    \begin{equation}
+        T_s \approx \frac{4}{\xi\omega_n} = \frac{4}{156,38} \approx 25,58\text{ ms}
+    \end{equation}
+    \item \textbf{Tiempo de subida ($t_r$):}
+    \begin{equation}
+        t_r = \frac{\pi - \beta}{\omega_d} = \frac{\pi - 1,256}{480,48} \approx 3,92\text{ ms}
     \end{equation}
 \end{itemize}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.82\textwidth]{figuras/respuesta_escalon_k11.pdf}
-    \caption{Respuesta al escalón unitario de $\text{Sys}_f(s)$ para el caso nominal ($k=11$), indicando el pico máximo, el tiempo de pico, el tiempo de establecimiento al $2\%$ y el valor final.}
-    \label{fig:step_k11}
-\end{figure}
+\section{Error en estado estacionario}
+La transferencia entre la referencia y el error $E(s) = \text{Entrada}(s) - \text{Salida}(s)$ es:
+\begin{equation}
+    E(s) = \frac{1}{1 + G(s)} R(s), \qquad G(s) = \frac{k}{(0,01 s + 1)(0,0047 s + 1)}
+\end{equation}
+Como $G(s)$ no posee polos en el origen ($N = 0$), el sistema es de \textbf{Tipo 0}. Aplicando el Teorema del Valor Final ($e_{ss} = \lim_{s \to 0} s E(s)$):
 
-% -------------------------------------------------------------
-\section{Punto 3: Error en Estado Estacionario}
-
-\subsection{Clasificación del sistema por Tipo de Lazo Abierto}
-El lazo abierto del sistema de control con realimentación unitaria es:
-\begin{equation}
-    G(s) = \text{Sys}_1(s) \cdot \text{Sys}_2(s) = \frac{k}{(0.01 s + 1)(0.0047 s + 1)} = \frac{k}{s^N (1 + \tau_1 s)(1 + \tau_2 s)}
-\end{equation}
-Dado que el exponente de $s$ en el origen es $N = 0$, la planta es un \textbf{Sistema de Tipo 0}.
-
-La función de transferencia de error es:
-\begin{equation}
-    E(s) = V_{\text{Entrada}}(s) - V_{\text{Salida}}(s) = \frac{1}{1 + G(s)} R(s)
-\end{equation}
-
-\subsection{Error ante entrada en escalón unitario ($r(t) = u(t) \iff R(s) = 1/s$)}
-La constante de error de posición estática $K_p$ es:
-\begin{equation}
-    K_p = \lim_{s \to 0} G(s) = G(0) = \frac{k}{(0 + 1)(0 + 1)} = k
-\end{equation}
-Aplicando el teorema del valor final para la señal de error:
-\begin{equation}
-    e_{ss,\text{escalón}} = \lim_{s \to 0} s E(s) = \lim_{s \to 0} s \cdot \frac{1}{1 + G(s)} \cdot \frac{1}{s} = \frac{1}{1 + K_p} = \frac{1}{1 + k}
-\end{equation}
-Para el valor nominal $k = 11$:
-\begin{equation}
-    \boxed{e_{ss,\text{escalón}} = \frac{1}{1 + 11} = \frac{1}{12} \approx \mathbf{0.08333\text{ V}} \quad (8.33\%)}
-\end{equation}
-Notar que coincide exactamente con:
-\begin{equation}
-    e_{ss} = r(\infty) - y(\infty) = 1.0\text{ V} - 0.91667\text{ V} = 0.08333\text{ V}
-\end{equation}
-
-\subsection{Error ante entrada en rampa unitaria ($r(t) = t \cdot u(t) \iff R(s) = 1/s^2$)}
-La constante de error de velocidad estática $K_v$ es:
-\begin{equation}
-    K_v = \lim_{s \to 0} s G(s) = \lim_{s \to 0} s \cdot \frac{k}{(0.01 s + 1)(0.0047 s + 1)} = 0
-\end{equation}
-Aplicando el teorema del valor final:
-\begin{equation}
-    e_{ss,\text{rampa}} = \lim_{s \to 0} s E(s) = \lim_{s \to 0} s \cdot \frac{1}{1 + G(s)} \cdot \frac{1}{s^2} = \lim_{s \to 0} \frac{1}{s(1 + G(s))} = \frac{1}{K_v} = \frac{1}{0^+} = \boldsymbol{\infty}
-\end{equation}
-\textbf{Interpretación física:}
-Al ser un sistema de Tipo 0 (no posee integración pura en lazo abierto), la salida no tiene la capacidad de incrementar constantemente su derivada para seguir una rampa sin acumular un retardo que diverge. El error entre la rampa de entrada y la salida crece ilimitadamente en el tiempo ($e(t) \to \infty$).
-
-% -------------------------------------------------------------
-\section{Punto 4: Variación de $k$ y Dimensionamiento Comercial E24}
-
-\subsection{Criterio de dimensionamiento normado (Serie E24)}
-De acuerdo con las directivas del Anexo de diseño:
 \begin{itemize}
-    \item Resistencias dentro del rango: $1\text{ k}\Omega \le R \le 100\text{ k}\Omega$.
-    \item Para fijar la ganancia no inversora $k = 1 + \dfrac{R_7}{R_9} \iff R_7 = (k - 1) R_9$, se selecciona primero un valor redondo para $R_9$ ($1\text{ k}\Omega$ o $10\text{ k}\Omega$) y se calcula $R_7$.
-    \item Se selecciona el valor más cercano de la serie comercial E24 ($\pm 5\%$) y se calcula el $k$ efectivo y el error relativo:
+    \item \textbf{Entrada en escalón unitario ($R(s) = 1/s$):}
     \begin{equation}
-        \text{Error}_k = \frac{|k_{\text{efectivo}} - k_{\text{diseño}}|}{k_{\text{diseño}}} \times 100\%
+        K_p = \lim_{s \to 0} G(s) = k = 11 \implies e_{ss,\text{escalón}} = \frac{1}{1 + K_p} = \frac{1}{1 + k} = \frac{1}{12} \approx 0,0833\text{ V}
     \end{equation}
+    \item \textbf{Entrada en rampa unitaria ($R(s) = 1/s^2$):}
+    \begin{equation}
+        K_v = \lim_{s \to 0} s G(s) = 0 \implies e_{ss,\text{rampa}} = \frac{1}{K_v} = \infty
+    \end{equation}
+    Al no tener un integrador en lazo abierto, el sistema no puede seguir una entrada en rampa y el error crece indefinidamente con el tiempo.
 \end{itemize}
 
-\subsubsection{Selección de componentes para cada caso de $k$}
-\begin{enumerate}
-    \item \textbf{Para $k = 1$:}
-    Requiere una ganancia no inversora unitaria ($k-1 = 0$). Esto corresponde a la configuración de \textbf{seguidor de tensión}: se conecta $R_7 = 0\,\Omega$ (cortocircuito / puente de conexión directa entre la salida y el terminal inversor) y se omite $R_9$ ($R_9 \to \infty$, circuito abierto).
-    \begin{equation}
-        k_{\text{ef}} = 1 + \frac{0}{\infty} = 1.000 \quad (\text{Error} = 0.00\%)
-    \end{equation}
-    \item \textbf{Para $k = 3.2$:}
-    Fijando $R_9 = 1\text{ k}\Omega$, se tiene $R_7 = (3.2 - 1) \cdot 1\text{ k}\Omega = 2.2\text{ k}\Omega$.
-    El valor $2.2$ pertenece a la serie E24 ($2.2\text{ k}\Omega$).
-    \begin{equation}
-        k_{\text{ef}} = 1 + \frac{2.2\text{ k}\Omega}{1.0\text{ k}\Omega} = 3.200 \quad (\text{Error} = 0.00\%)
-    \end{equation}
-    \item \textbf{Para $k = 5.7$:}
-    Fijando $R_9 = 1\text{ k}\Omega$, se tiene $R_7 = (5.7 - 1) \cdot 1\text{ k}\Omega = 4.7\text{ k}\Omega$.
-    El valor $4.7$ pertenece a la serie E24 ($4.7\text{ k}\Omega$).
-    \begin{equation}
-        k_{\text{ef}} = 1 + \frac{4.7\text{ k}\Omega}{1.0\text{ k}\Omega} = 5.700 \quad (\text{Error} = 0.00\%)
-    \end{equation}
-    \item \textbf{Para $k = 34$:}
-    Fijando $R_9 = 1\text{ k}\Omega$, se tiene $R_7 = (34 - 1) \cdot 1\text{ k}\Omega = 33\text{ k}\Omega$.
-    El valor $33$ pertenece a la serie E24 ($33\text{ k}\Omega$).
-    \begin{equation}
-        k_{\text{ef}} = 1 + \frac{33\text{ k}\Omega}{1.0\text{ k}\Omega} = 34.000 \quad (\text{Error} = 0.00\%)
-    \end{equation}
-\end{enumerate}
-
-Todos los valores comerciales elegidos proporcionan exactamente la ganancia nominal de diseño con un \textbf{error relativo del $0.00\%$}.
-
-\subsection{Tabla comparativa de parámetros}
-En la Tabla \ref{tab:tabla_punto4} se resumen los parámetros analíticos de la respuesta temporal y de régimen estacionario obtenidos para cada valor de $k$, calculados a partir de las ecuaciones deducidas en las secciones previas:
+\section{Respuesta para distintos valores de $k$ (serie E24)}
+Para realizar la ganancia $k = 1 + \frac{R_7}{R_9}$ con resistencias comerciales de la serie E24 en el rango de $1\text{ k}\Omega$ a $100\text{ k}\Omega$, fijamos $R_9 = 1\text{ k}\Omega$ y calculamos $R_7 = (k - 1)R_9$:
 \begin{itemize}
-    \item $\omega_n = \sqrt{\dfrac{1+k}{\tau_1 \tau_2}}$
-    \item $\xi = \dfrac{\tau_1 + \tau_2}{2 \sqrt{(1+k)\tau_1 \tau_2}}$
-    \item $PO = 100\% \cdot e^{-\frac{\pi \xi}{\sqrt{1-\xi^2}}}$
-    \item $T_p = \dfrac{\pi}{\omega_n \sqrt{1 - \xi^2}}$
-    \item $T_s (2\%) \approx \dfrac{4}{\xi \omega_n}$ (con $\sigma = \xi \omega_n = 156.38\text{ s}^{-1}$ constante en todos los casos)
-    \item $y(\infty) = \dfrac{k}{1+k}$
-    \item $e_{ss} = \dfrac{1}{1+k}$
+    \item \textbf{$k = 1$:} Se reemplaza $R_7$ por un puente directo ($R_7 = 0\,\Omega$) y se puede desconectar $R_9$ ($R_9 \to \infty$), quedando $U_{2A}$ como seguidor de tensión con $k_{\text{ef}} = 1$.
+    \item \textbf{$k = 3,2$:} $R_7 = 2,2\text{ k}\Omega$ y $R_9 = 1\text{ k}\Omega \implies k_{\text{ef}} = 1 + \frac{2,2}{1} = 3,2$.
+    \item \textbf{$k = 5,7$:} $R_7 = 4,7\text{ k}\Omega$ y $R_9 = 1\text{ k}\Omega \implies k_{\text{ef}} = 1 + \frac{4,7}{1} = 5,7$.
+    \item \textbf{$k = 34$:} $R_7 = 33\text{ k}\Omega$ y $R_9 = 1\text{ k}\Omega \implies k_{\text{ef}} = 1 + \frac{33}{1} = 34$.
 \end{itemize}
+Como $2,2$, $4,7$ y $33$ son valores exactos de la serie E24, en los cuatro casos el $k$ efectivo coincide exactamente con el valor pedido (error relativo del $0\%$). En la Tabla \ref{tab:punto4} se resumen los parámetros calculados con las expresiones de los puntos anteriores.
 
 \begin{table}[H]
     \centering
-    \caption{Parámetros de respuesta temporal y régimen estacionario para distintos valores de $k$ comerciales.}
-    \label{tab:tabla_punto4}
-    \small
     \begin{tabular}{c c c c c c c c c}
         \toprule
         \textbf{$k$} & \textbf{$R_7 / R_9$} & \textbf{$\omega_n$ [rad/s]} & \textbf{$\xi$} & \textbf{PO [\%]} & \textbf{$T_p$ [s]} & \textbf{$T_s$ [s]} & \textbf{$y(\infty)$} & \textbf{$e_{ss}$} \\
         \midrule
-        \textbf{1,0} & $0\,\Omega$ / Circ. abierto & 206,28 & 0,7581 & 2,59 & 0,02335 & 0,02558 & 0,5000 & 0,5000 \\
-        \textbf{3,2} & $2,2\text{ k}\Omega\,/\,1,0\text{ k}\Omega$ & 298,93 & 0,5231 & 14,54 & 0,01233 & 0,02558 & 0,7619 & 0,2381 \\
-        \textbf{5,7} & $4,7\text{ k}\Omega\,/\,1,0\text{ k}\Omega$ & 377,56 & 0,4142 & 23,94 & 0,00914 & 0,02558 & 0,8507 & 0,1493 \\
-        \midrule
-        \textit{11,0*} & $10\text{ k}\Omega\,/\,1,0\text{ k}\Omega$ & 505,29 & 0,3095 & 35,97 & 0,00654 & 0,02558 & 0,9167 & 0,0833 \\
-        \midrule
-        \textbf{34,0} & $33\text{ k}\Omega\,/\,1,0\text{ k}\Omega$ & 862,95 & 0,1812 & 56,05 & 0,00370 & 0,02558 & 0,9714 & 0,0286 \\
+        $1$ & $0\,\Omega$ / $\infty$ & $206,28$ & $0,7581$ & $2,59$ & $0,0234$ & $0,0256$ & $0,5000$ & $0,5000$ \\
+        $3,2$ & $2,2\text{ k}\Omega\,/\,1\text{ k}\Omega$ & $298,93$ & $0,5231$ & $14,54$ & $0,0123$ & $0,0256$ & $0,7619$ & $0,2381$ \\
+        $5,7$ & $4,7\text{ k}\Omega\,/\,1\text{ k}\Omega$ & $377,56$ & $0,4142$ & $23,94$ & $0,0091$ & $0,0256$ & $0,8507$ & $0,1493$ \\
+        $34$ & $33\text{ k}\Omega\,/\,1\text{ k}\Omega$ & $862,95$ & $0,1812$ & $56,05$ & $0,0037$ & $0,0256$ & $0,9714$ & $0,0286$ \\
         \bottomrule
     \end{tabular}
-    \vspace{0.4em}\\
-    \footnotesize{*Nota: Se incluye $k=11$ (caso nominal de la Fig. 1) como referencia comparativa central.}
+    \caption{Parámetros teóricos de la respuesta al escalón para los cuatro valores de $k$.}
+    \label{tab:punto4}
 \end{table}
-
-\subsection{Análisis comparativo de la evolución temporal}
-En la Figura \ref{fig:comparacion_k} se superponen las respuestas al escalón unitario de $\text{Sys}_f(s)$ para los valores analizados. Se evidencian las siguientes conclusiones de diseño:
-\begin{enumerate}
-    \item \textbf{Amortiguamiento y sobrepaso:} Para $k=1$, el sistema está fuertemente amortiguado ($\xi \approx 0.76$) con un sobrepaso prácticamente despreciable ($2.6\%$). Sin embargo, a medida que $k$ sube a 34, el amortiguamiento desciende drásticamente a $\xi \approx 0.18$, provocando un sobrepaso excesivo ($56\%$) con oscilaciones pronunciadas.
-    \item \textbf{Velocidad de subida ($t_r$, $T_p$):} Al crecer $k$, $\omega_n$ se cuadruplica (de $206\text{ rad/s}$ a $863\text{ rad/s}$), haciendo que el tiempo de pico se reduzca notablemente de $23.35\text{ ms}$ a apenas $3.70\text{ ms}$.
-    \item \textbf{Tiempo de establecimiento ($T_s$):} Notar que todas las curvas se estabilizan esencialmente en la misma franja de tiempo ($T_s \approx 25.6\text{ ms}$). Esto se debe a que la parte real de los polos $\sigma = \xi \omega_n = 156.38\text{ s}^{-1}$ es puramente una función de las redes pasivas $R_1 C_1$ y $R_2 C_2$, por lo que la velocidad de decaimiento de la envolvente exponencial es constante.
-    \item \textbf{Precisión en régimen permanente ($y(\infty)$, $e_{ss}$):} Para $k=1$, el error es inaceptablemente alto ($50\%$). Al incrementar $k$ hasta 34, el valor en estado estacionario asciende a $0.9714\text{ V}$, reduciendo el error al $2.86\%$. Existe, por tanto, el clásico compromiso de diseño (\textit{trade-off}) entre precisión en estado estacionario y estabilidad relativa (sobrepaso).
-\end{enumerate}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.88\textwidth]{figuras/comparacion_respuestas_k.pdf}
-    \caption{Comparación de la respuesta al escalón unitario de $\text{Sys}_f(s)$ para los distintos valores de ganancia $k$ estudiados.}
-    \label{fig:comparacion_k}
-\end{figure}
 
 \end{document}
