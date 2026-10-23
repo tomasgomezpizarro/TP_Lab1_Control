@@ -174,7 +174,7 @@ Para realizar la ganancia $k = 1 + \frac{R_7}{R_9}$ con resistencias comerciales
     \item \textbf{$k = 5,7$:} $R_7 = 4,7\text{ k}\Omega$ y $R_9 = 1\text{ k}\Omega \implies k_{\text{ef}} = 1 + \frac{4,7}{1} = 5,7$.
     \item \textbf{$k = 34$:} $R_7 = 33\text{ k}\Omega$ y $R_9 = 1\text{ k}\Omega \implies k_{\text{ef}} = 1 + \frac{33}{1} = 34$.
 \end{itemize}
-Como $2,2$, $4,7$ y $33$ son valores exactos de la serie E24, en los cuatro casos el $k$ efectivo coincide exactamente con el valor pedido (error relativo del $0\%$). En la Tabla \ref{tab:punto4} se resumen los parámetros calculados con las expresiones de los puntos anteriores.
+Como $2,2$, $4,7$ y $33$ son valores exactos de la serie E24, en los cuatro casos el $k$ efectivo coincide exactamente con el valor pedido (error relativo del $0\%$). En la Tabla \ref{tab:punto4} se resumen los parámetros calculados en MATLAB (script \texttt{TP\_Lab1.m}, mediante las funciones \texttt{tf}, \texttt{feedback}, \texttt{damp}, \texttt{stepinfo} y \texttt{dcgain} del \textit{Control System Toolbox}, en concordancia con las expresiones analíticas de los puntos anteriores).
 
 \begin{table}[H]
     \centering
@@ -191,5 +191,84 @@ Como $2,2$, $4,7$ y $33$ son valores exactos de la serie E24, en los cuatro caso
     \caption{Parámetros teóricos de la respuesta al escalón para los cuatro valores de $k$.}
     \label{tab:punto4}
 \end{table}
+
+\section*{Parte B. Verificación por simulación circuital}
+
+\section{Circuito con op-amps ideales}
+
+\subsection{Implementación en Simscape}
+Se armó el circuito completo de la Fig. \ref{fig:circuito} en Simscape (\texttt{TP\_Lab1\_Ideal.slx}) utilizando componentes físicos de la librería \textit{Foundation Library $>$ Electrical}: resistores, capacitores con tensión inicial fijada en $0\text{ V}$ y el bloque \texttt{Op-Amp} ideal para $U_{1A}$, $U_{3A}$ y $U_{2A}$. La excitación en escalón de $1\text{ V}$ se inyecta mediante un bloque \texttt{Step} de Simulink acoplado a una \texttt{Controlled Voltage Source} a través de un \texttt{Simulink-PS Converter}, y la tensión de salida se mide con un \texttt{Voltage Sensor}. La red se resuelve con el integrador para sistemas rígidos \texttt{ode23t} durante $50\text{ ms}$.
+
+\subsection{Comparación de la salida con $\text{Sys}_f(s)$ ($k = 11$)}
+En la Fig. \ref{fig:punto5b} se superpone la tensión de salida obtenida en Simscape con la respuesta teórica de $\text{Sys}_f(s)$ calculada en MATLAB (\texttt{step(Sysf\_nom)}). Como el integrador \texttt{ode23t} emplea paso variable y \texttt{step} requiere una grilla temporal uniforme, se interpoló la señal simulada sobre una grilla equiespaciada de $5000$ puntos para evaluar la diferencia punto a punto.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{figuras/punto5b_k11.png}
+    \caption{Respuesta al escalón de $1\text{ V}$ para $k = 11$: función de transferencia teórica $\text{Sys}_f(s)$ vs. circuito en Simscape con op-amps ideales.}
+    \label{fig:punto5b}
+\end{figure}
+
+El error máximo absoluto entre ambas curvas en todo el intervalo de simulación es:
+\begin{equation}
+    e_{\max} = \max_{t \in [0,\,50\text{ ms}]} \left|y_{\text{teor}}(t) - y_{\text{sim}}(t)\right| = 1,69 \times 10^{-6}\text{ V}
+\end{equation}
+Ambas respuestas coinciden de forma prácticamente exacta porque tanto la deducción analítica de $\text{Sys}_f(s)$ como el bloque \texttt{Op-Amp} ideal de Simscape asumen amplificadores sin corriente de entrada ($I_+ = I_- = 0$), ganancia de lazo abierto infinita ($V_+ = V_-$), ancho de banda infinito y ausencia de saturación, de modo que el seguidor $U_{3A}$ aísla perfectamente las dos etapas $RC$. La diferencia de $1,69\,\mu\text{V}$ se debe únicamente al error numérico de integración del solver \texttt{ode23t}.
+
+\subsection{Señal de error $e(t)$ a la salida de $U_{1A}$ ($k = 11$)}
+La tensión a la salida del restador $U_{1A}$ corresponde a la señal de error $E(s) = \text{Entrada}(s) - \text{Salida}(s)$. Sabiendo que $\text{Salida}(s) = G(s)E(s)$ con $G(s) = \text{Sys}_1(s)\text{Sys}_2(s)$, la función de transferencia entre la referencia y el error es:
+\begin{equation}
+    \text{Sys}_e(s) = \frac{E(s)}{\text{Entrada}(s)} = \frac{1}{1 + G(s)} = \frac{(\tau_1 s + 1)(\tau_2 s + 1)}{(\tau_1 s + 1)(\tau_2 s + 1) + k}
+\end{equation}
+Reemplazando $\tau_1 = 0,01\text{ s}$, $\tau_2 = 0,0047\text{ s}$ y $k = 11$ (calculada en MATLAB mediante \texttt{feedback(1, G\_nom)}):
+\begin{equation}
+    \text{Sys}_e(s) = \frac{4,7 \times 10^{-5}\,s^2 + 0,0147\,s + 1}{4,7 \times 10^{-5}\,s^2 + 0,0147\,s + 12} = \frac{s^2 + 312,77\,s + 21276,60}{s^2 + 312,77\,s + 255319,15}
+\end{equation}
+
+En la Fig. \ref{fig:punto5c} se superpone la respuesta teórica al escalón de $\text{Sys}_e(s)$ con la tensión medida en el terminal de salida de $U_{1A}$ en Simscape (\texttt{simlog.U1A.out.v}).
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.78\textwidth]{figuras/punto5c_error_k11.png}
+    \caption{Señal de error $e(t)$ a la salida de $U_{1A}$ para un escalón de $1\text{ V}$ ($k = 11$): transferencia teórica $E(s)/\text{Entrada}(s)$ vs. Simscape.}
+    \label{fig:punto5c}
+\end{figure}
+
+En $t = 0^+$, al estar descargados los capacitores ($y(0^+) = 0\text{ V}$), el error parte de $e(0^+) = 1\text{ V}$. Cuando la salida alcanza su pico máximo de $1,246\text{ V}$ en $T_p \approx 6,54\text{ ms}$, el error toma su valor mínimo negativo ($1 - 1,246 = -0,246\text{ V}$). Finalmente, en régimen permanente la tensión a la salida de $U_{1A}$ converge a:
+\begin{equation}
+    e_{\text{sim}}(\infty) = 0,0833\text{ V} = \frac{1}{12}\text{ V}
+\end{equation}
+coincidiendo con el error en estado estacionario $e_{ss} = \frac{1}{1+k}$ calculado en el Punto 3 (con una discrepancia máxima punto a punto de $1,69\,\mu\text{V}$ entre toda la curva teórica y la simulada).
+
+\subsection{Comparación para los cuatro valores de $k$ del Punto 4}
+Se repitió la simulación en Simscape para $k \in \{1;\, 3,2;\, 5,7;\, 34\}$ fijando $R_9 = 1\text{ k}\Omega$ y variando $R_7 \in \{0\,\Omega;\, 2,2\text{ k}\Omega;\, 4,7\text{ k}\Omega;\, 33\text{ k}\Omega\}$ mediante \texttt{Simulink.SimulationInput}. En la Fig. \ref{fig:punto5d} se superponen las respuestas teóricas y simuladas para los cuatro casos, y en la Tabla \ref{tab:punto5d} se comparan los parámetros teóricos frente a los medidos sobre las curvas de Simscape con \texttt{stepinfo}.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{figuras/punto5d_barrido_k.png}
+    \caption{Respuesta al escalón de $1\text{ V}$ para $k = 1$; $3,2$; $5,7$ y $34$: modelo teórico $\text{Sys}_f(s)$ (trazo continuo) vs. Simscape con op-amps ideales (trazo punteado).}
+    \label{fig:punto5d}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \small
+    \begin{tabular}{c c c c c c c c c c}
+        \toprule
+        & & \multicolumn{2}{c}{\textbf{PO [\%]}} & \multicolumn{2}{c}{\textbf{$T_p$ [s]}} & \multicolumn{2}{c}{\textbf{$T_s$ [s]}} & \multicolumn{2}{c}{\textbf{$y(\infty)$ / $e_{ss}$ [V]}} \\
+        \cmidrule(lr){3-4} \cmidrule(lr){5-6} \cmidrule(lr){7-8} \cmidrule(lr){9-10}
+        \textbf{$k$} & \textbf{$R_7 / R_9$} & \textbf{Teór.} & \textbf{Sim.} & \textbf{Teór.} & \textbf{Sim.} & \textbf{$4/(\xi\omega_n)$} & \textbf{Sim.} & \textbf{Teór.} & \textbf{Sim.} \\
+        \midrule
+        $1$   & $0\,\Omega$ / $\infty$            & $2,59$  & $2,65$  & $0,0234$ & $0,0234$ & $0,0256$ & $0,0277$ & $0,5000\,/\,0,5000$ & $0,4997\,/\,0,5003$ \\
+        $3,2$ & $2,2\text{ k}\Omega\,/\,1\text{ k}\Omega$ & $14,54$ & $14,59$ & $0,0123$ & $0,0123$ & $0,0256$ & $0,0256$ & $0,7619\,/\,0,2381$ & $0,7616\,/\,0,2384$ \\
+        $5,7$ & $4,7\text{ k}\Omega\,/\,1\text{ k}\Omega$ & $23,94$ & $23,91$ & $0,0091$ & $0,0091$ & $0,0256$ & $0,0223$ & $0,8507\,/\,0,1493$ & $0,8509\,/\,0,1491$ \\
+        $34$  & $33\text{ k}\Omega\,/\,1\text{ k}\Omega$  & $56,05$ & $56,04$ & $0,0037$ & $0,0037$ & $0,0256$ & $0,0233$ & $0,9714\,/\,0,0286$ & $0,9715\,/\,0,0285$ \\
+        \bottomrule
+    \end{tabular}
+    \caption{Comparación entre parámetros teóricos y medidos sobre la simulación en Simscape para los cuatro valores de $k$.}
+    \label{tab:punto5d}
+\end{table}
+
+En los cuatro casos el error máximo entre la curva teórica y la simulada se mantiene por debajo de $1,2 \times 10^{-5}\text{ V}$. Las leves diferencias en la segunda cifra decimal de $PO$ y en $T_s$ se deben a que la columna teórica reporta la aproximación de envolvente $T_s \approx 4/(\xi\omega_n) = 25,6\text{ ms}$, mientras que \texttt{stepinfo} mide el instante exacto en que la oscilación ingresa por última vez a la banda del $\pm 2\%$ sobre los puntos discretos de la simulación.
 
 \end{document}

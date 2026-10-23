@@ -5,17 +5,27 @@ Este repositorio contiene el **Trabajo de Laboratorio Integrador: Modelado de si
 
 - **Consigna oficial completa**: `consigna_TP_Lab1.pdf` (ubicada en la raíz de este repositorio).
 - **División del trabajo**:
-  - **Tomás (autor de este repo)**: Realiza la **Parte A completa (Puntos 1, 2, 3 y 4)** y el **Punto 5 de la Parte B** (verificación en Simscape con amplificadores operacionales ideales).
-  - **Compañero de grupo**: Realiza los **Puntos 6 y 7 de la Parte B** (op-amp real TL081 y análisis de sensibilidad a tolerancias).
+  - **Tomás**: Realizó la **Parte A completa (Puntos 1, 2, 3 y 4)** y el **Punto 5 de la Parte B** (verificación en Simscape con amplificadores operacionales ideales).
+  - **Mikael (compañero de grupo)**: Revisará el **Punto 5.d** (que quedó pendiente de revisión humana), hará un repaso guiado de los **Puntos 1 al 5** para comprender todo lo hecho, y realizará los **Puntos 6 y 7 de la Parte B** (op-amp real TL081 y análisis de sensibilidad a tolerancias).
 
 ## 2. Estructura de Archivos del Repositorio
 - `consigna_TP_Lab1.pdf`: Enunciado completo del trabajo práctico y su Anexo (parámetros del TL081, tabla de resistores serie E24 y pautas de Simscape).
-- `informe_parte1.tex` y `informe_parte1.pdf`: Informe en LaTeX. Actualmente tiene redactados y revisados los **Puntos 1, 2, 3 y 4** (Parte A completa).
-- `TP_Lab1.m`: Script principal de MATLAB con el cálculo de parámetros nominales (Puntos 1 a 3) y el barrido de los cuatro valores de $k$ con resistores comerciales E24 para armar la tabla del Punto 4. (Deberá exportarse también como Live Script `.mlx` para la entrega final junto con las simulaciones del Punto 5).
-- `stepinfo.m`: Función auxiliar compatible con MATLAB para extraer `RiseTime`, `SettlingTime` (2%), `Overshoot`, `Peak` y `PeakTime` de las curvas simuladas.
-- `TP_Lab1_Ideal.slx`: Modelo físico en Simscape del circuito de la Figura 1 usando bloques `Op-Amp` ideales (para el Punto 5).
+- `informe_parte1.tex` y `informe_parte1.pdf`: Informe en LaTeX. Actualmente tiene redactados y revisados los **Puntos 1, 2, 3 y 4** (Parte A completa), indicando explícitamente en el Punto 4 que los parámetros de la tabla fueron calculados en MATLAB (`TP_Lab1.m`, Control System Toolbox).
+- `TP_Lab1.m`: Script principal de MATLAB que utiliza funciones nativas del *Control System Toolbox* (`tf`, `feedback`, `damp`, `stepinfo`, `dcgain`) para el cálculo de parámetros nominales (Puntos 1 a 3) y el barrido de los cuatro valores de $k$ con resistores comerciales E24 para armar la tabla del Punto 4. (Deberá extenderse con las simulaciones del Punto 5 y exportarse como Live Script `.mlx` para la entrega final).
+- `TP_Lab1_Ideal.slx`: Modelo físico en Simscape del circuito de la Figura 1 usando bloques `Op-Amp` ideales (`fl_lib/Electrical/Electrical Elements/Op-Amp`), solver `ode23t` y $t_{\text{stop}} = 0,05\text{ s}$ (para el Punto 5).
 - `TP_Lab1_TL081.slx`: Modelo físico en Simscape usando bloques `Band-Limited Op-Amp` configurados con los parámetros del TL081 (para los Puntos 6 y 7).
 - `figuras/`: Esquemas del circuito (`figura_1.png`), diagrama de bloques (`figura_2.png`) y gráficos de resultados.
+
+## 2.1. Estado de Avance Actual (Parte B - Punto 5)
+- **Punto 5.a (Explicación e implementación en Simscape)**: Se revisó y explicó al usuario la arquitectura bloque por bloque de `TP_Lab1_Ideal.slx`. Se verificó que el modelo tiene activo el registro nativo de Simscape (`out.simlog`).
+- **Punto 5.b (Comparación de salida $y(t)$ para $k = 11$)**: Implementado en `TP_Lab1.m` y volcado a `informe_parte1.tex`. El error máximo entre `step(Sysf_nom)` y Simscape dio $1,6857 \times 10^{-6}\text{ V}$ ($\approx 1,69\,\mu\text{V}$), atribuible únicamente a la tolerancia numérica del solver `ode23t`. Gráfico generado en `figuras/punto5b_k11.png`.
+- **Punto 5.c (Señal de error $e(t)$ en salida de `U1A` para $k = 11$)**: Implementado en `TP_Lab1.m` (`Sys_e = feedback(1, G_nom)` vs. `out_nom.simlog.U1A.out.v`) y volcado a `informe_parte1.tex`. Gráfico generado en `figuras/punto5c_error_k11.png`. El valor final simulado converge a $0,0833\text{ V}$ ($1/12\text{ V}$), coincidiendo con el Punto 3, y el error máximo punto a punto también es $1,69\,\mu\text{V}$. Preguntas de seguimiento respondidas y validadas con el usuario.
+- **Punto 5.d (Barrido de los 4 valores de $k$ en Simscape — ⚠️ FALTA REVISIÓN HUMANA)**: Implementado en la Sección 6 de `TP_Lab1.m` mediante `Simulink.SimulationInput` y `setBlockParameter` sobre el bloque `R7` para no ensuciar el archivo `.slx`, y volcado a `informe_parte1.tex` (`figuras/punto5d_barrido_k.png` y tabla comparativa). **Importante**: Tomás tuvo que retirarse antes de revisar este subpunto, por lo que **el Punto 5.d requiere revisión humana por parte de Mikael** (incluyendo responder las preguntas de seguimiento conceptuales sobre por qué $R_7 = 0$ da $k = 1$ aunque $R_9$ siga conectado y por qué la atenuación $\sigma = \xi\omega_n$ mantiene constante el tiempo de establecimiento $T_s$ al variar $k$).
+
+## 2.2. Instrucciones Especiales para el Agente que Asista a Mikael
+1. **Propuesta inicial obligatoria al comenzar la sesión**: Apenas Mikael inicie la conversación, el agente **debe proponerle hacer primero un recorrido/revisión interactiva de los Puntos 1 al 5** (tanto de las deducciones teóricas en `informe_parte1.tex` como del código en `TP_Lab1.m` y el modelo `TP_Lab1_Ideal.slx`) para que él también comprenda y aprenda a fondo todo lo que ya se construyó antes de encarar los Puntos 6 y 7.
+2. **Revisión humana del Punto 5.d**: Validar especialmente con Mikael los resultados, el gráfico `figuras/punto5d_barrido_k.png` y la tabla comparativa del Punto 5.d, que quedaron listos pero sin revisión humana de Tomás.
+3. **Continuación con Puntos 6 y 7**: Una vez que Mikael esté al día con los Puntos 1–5, aplicar la misma dinámica paso a paso (explicación teórica/práctica + preguntas de seguimiento) para resolver el Punto 6 (op-amp no ideal TL081 con `TP_Lab1_TL081.slx`) y el Punto 7 (sensibilidad a tolerancias de $\pm 5\%$ en resistores y $\pm 10\%$ en capacitores).
 
 ## 3. Reglas de Estilo y Redacción del Informe (`informe_parte1.tex`)
 1. **Tono de estudiante real de ingeniería**: La redacción debe ser sobria, directa, clara y concisa. **Evitar terminología inflada o adjetivos típicos de IA** (como *"demostraremos fielmente"*, *"disminuye monótonamente"*, *"error inaceptablemente alto"*).
@@ -25,6 +35,5 @@ Este repositorio contiene el **Trabajo de Laboratorio Integrador: Modelado de si
 3. **Estética limpia en LaTeX**: Mantener formato `article` estándar en negro, sin encabezados coloreados ni exceso de recuadros `\boxed{}`.
 
 ## 4. Dinámica de Trabajo con el Usuario
-- **Priorizar el aprendizaje activo**: El usuario busca comprender a fondo cada punto físico y matemático. Antes de volcar resultados nuevos (como el Punto 5), hacerle preguntas conceptuales o de predicción física y guiarlo de forma interactiva.
-- **Confirmar antes de modificar**: Proponer los cambios y esperar confirmación del usuario antes de editar el código o el informe.
+- **Flujo paso a paso con verificación de aprendizaje**: Avanzar de a un subpunto a la vez. En cada paso, el agente ejecuta/implementa lo necesario, explica de forma clara tanto la parte práctica (código/bloques de MATLAB/Simscape) como la teórica/física, y cierra con **preguntas de seguimiento y entendimiento** para verificar que el usuario comprendió todo antes de pasar al siguiente paso.
 - **Visualización de PDFs**: El IDE abre los enlaces `[archivo.pdf](file:///...)` como binario crudo. Nunca usar links `file://` clickeables para PDFs; en su lugar, abrirlos en Google Chrome mediante `google-chrome "/ruta/absoluta/archivo.pdf" >/dev/null 2>&1 &` o dejar la ruta en un bloque de código.
