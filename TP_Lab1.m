@@ -1,5 +1,5 @@
 %% Trabajo de Laboratorio Integrador - Sistemas de Control
-% Parte A: Modelado y Análisis (Puntos 1 al 4)
+% Parte A: Modelado y Análisis (Puntos 1 al 4) usando Control System Toolbox
 clear; clc; close all;
 
 %% 1. Parámetros físicos del circuito (Figura 1)
@@ -14,81 +14,86 @@ tau2 = R2 * C2;      % Constante de tiempo etapa 2: 0.0047 s
 % Ganancia nominal de la etapa no inversora U2A (R7 = 10k, R9 = 1k)
 R7_nom = 10e3;
 R9_nom = 1e3;
-k_nom = 1 + R7_nom / R9_nom;  % k = 11
+k_nom  = 1 + R7_nom / R9_nom;  % k = 11
 
-%% 2. Punto 1 y 2: Caso nominal (k = 11)
-% Denominador mónico: s^2 + (1/tau1 + 1/tau2)*s + (1 + k)/(tau1*tau2)
-wn_nom = sqrt((1 + k_nom) / (tau1 * tau2));
-xi_nom = (1/tau1 + 1/tau2) / (2 * wn_nom);
-wd_nom = wn_nom * sqrt(1 - xi_nom^2);
-beta_nom = acos(xi_nom);
+%% 2. Puntos 1, 2 y 3: Modelo de transferencia y respuesta al escalón (k = 11)
+s = tf('s');
 
-y_inf_nom = k_nom / (1 + k_nom);
-PO_nom    = 100 * exp(-pi * xi_nom / sqrt(1 - xi_nom^2));
-Tp_nom    = pi / wd_nom;
-Ts_nom    = 4 / (xi_nom * wn_nom);          % Criterio del 2%
-tr_nom    = (pi - beta_nom) / wd_nom;       % 0 a 100%
-ess_nom   = 1 / (1 + k_nom);                % Error al escalón unitario
+Sys1 = 1 / (tau1 * s + 1);
+Sys2 = k_nom / (tau2 * s + 1);
 
-fprintf('=== CASO NOMINAL (k = %.1f) ===\n', k_nom);
+% Lazo abierto G(s) y lazo cerrado con realimentación unitaria Sysf(s)
+G_nom    = Sys1 * Sys2;
+Sysf_nom = feedback(G_nom, 1);
+
+disp('=== FUNCIÓN DE TRANSFERENCIA EN LAZO CERRADO Sysf(s) (k = 11) ===');
+Sysf_nom
+
+% Frecuencia natural (wn) y amortiguamiento (xi) con damp()
+[wn_vec, xi_vec] = damp(Sysf_nom);
+wn_nom = wn_vec(1);
+xi_nom = xi_vec(1);
+
+% Parámetros de respuesta al escalón con stepinfo() y ganancia DC con dcgain()
+info_nom  = stepinfo(Sysf_nom);
+y_inf_nom = dcgain(Sysf_nom);
+ess_nom   = 1 - y_inf_nom;
+Ts_teor   = 4 / (xi_nom * wn_nom);  % Aproximación teórica de envolvente (2%)
+
+fprintf('=== PARÁMETROS CASO NOMINAL (k = %.1f) ===\n', k_nom);
 fprintf('wn    = %.2f rad/s\n', wn_nom);
 fprintf('xi    = %.4f\n', xi_nom);
-fprintf('PO    = %.2f %%\n', PO_nom);
-fprintf('Tp    = %.4f s (%.2f ms)\n', Tp_nom, Tp_nom*1e3);
-fprintf('Ts    = %.4f s (%.2f ms)\n', Ts_nom, Ts_nom*1e3);
-fprintf('tr    = %.4f s (%.2f ms)\n', tr_nom, tr_nom*1e3);
+fprintf('PO    = %.2f %%\n', info_nom.Overshoot);
+fprintf('Tp    = %.4f s (%.2f ms)\n', info_nom.PeakTime, info_nom.PeakTime*1e3);
+fprintf('Ts    = %.4f s (stepinfo exacto) | %.4f s (4/(xi*wn))\n', info_nom.SettlingTime, Ts_teor);
+fprintf('tr    = %.4f s (10%%-90%%)\n', info_nom.RiseTime);
 fprintf('y(oo) = %.4f V\n', y_inf_nom);
 fprintf('ess   = %.4f V\n\n', ess_nom);
 
 %% 3. Punto 4: Barrido de valores de k con resistencias comerciales E24
-% Valores de k pedidos: 1, 3.2, 5.7 y 34
-% Fijando R9 = 1 kOhm, calculamos R7 = (k - 1)*R9 dentro de la serie E24:
-% - Para k = 1:   R7 = 0 Ohm (puente), R9 = Inf (circuito abierto) -> k_ef = 1
-% - Para k = 3.2: R7 = 2.2 kOhm,       R9 = 1 kOhm                 -> k_ef = 3.2
-% - Para k = 5.7: R7 = 4.7 kOhm,       R9 = 1 kOhm                 -> k_ef = 5.7
-% - Para k = 34:  R7 = 33 kOhm,        R9 = 1 kOhm                 -> k_ef = 34
-
 k_vals  = [1,   3.2,   5.7,   34];
 R7_vals = [0,   2.2e3, 4.7e3, 33e3];
 R9_vals = [Inf, 1e3,   1e3,   1e3];
 
 n = length(k_vals);
-k_ef  = zeros(n, 1);
-wn    = zeros(n, 1);
-xi    = zeros(n, 1);
-PO    = zeros(n, 1);
-Tp    = zeros(n, 1);
-Ts    = zeros(n, 1);
-y_inf = zeros(n, 1);
-ess   = zeros(n, 1);
+k_ef      = zeros(n, 1);
+wn        = zeros(n, 1);
+xi        = zeros(n, 1);
+PO        = zeros(n, 1);
+Tp        = zeros(n, 1);
+Ts_aprox  = zeros(n, 1);
+Ts_exacto = zeros(n, 1);
+y_inf     = zeros(n, 1);
+ess       = zeros(n, 1);
 
 for i = 1:n
     % Ganancia efectiva con los resistores comerciales elegidos
-    if isinf(R9_vals(i))
-        k_ef(i) = 1;
-    else
-        k_ef(i) = 1 + R7_vals(i) / R9_vals(i);
-    end
+    k_ef(i) = 1 + R7_vals(i) / R9_vals(i);
     
-    % Parámetros de 2do orden para cada k
-    wn(i) = sqrt((1 + k_ef(i)) / (tau1 * tau2));
-    xi(i) = (1/tau1 + 1/tau2) / (2 * wn(i));
-    wd    = wn(i) * sqrt(1 - xi(i)^2);
+    % Armamos la FT en lazo cerrado para este valor de k
+    Sys2_i = k_ef(i) / (tau2 * s + 1);
+    Sysf_i = feedback(Sys1 * Sys2_i, 1);
     
-    % Métricas de desempeño ante escalón unitario
-    PO(i)    = 100 * exp(-pi * xi(i) / sqrt(1 - xi(i)^2));
-    Tp(i)    = pi / wd;
-    Ts(i)    = 4 / (xi(i) * wn(i));
-    y_inf(i) = k_ef(i) / (1 + k_ef(i));
-    ess(i)   = 1 - y_inf(i);
+    % Extraemos wn, xi, dcgain y métricas con stepinfo
+    [wn_i, xi_i] = damp(Sysf_i);
+    info_i       = stepinfo(Sysf_i);
+    
+    wn(i)        = wn_i(1);
+    xi(i)        = xi_i(1);
+    PO(i)        = info_i.Overshoot;
+    Tp(i)        = info_i.PeakTime;
+    Ts_aprox(i)  = 4 / (xi(i) * wn(i));
+    Ts_exacto(i) = info_i.SettlingTime;
+    y_inf(i)     = dcgain(Sysf_i);
+    ess(i)       = 1 - y_inf(i);
 end
 
-% Armamos y mostramos la tabla resumen del Punto 4
 R7_R9_str = ["0 / Inf"; "2.2k / 1k"; "4.7k / 1k"; "33k / 1k"];
 Tabla_Punto4 = table(k_vals(:), R7_R9_str, k_ef, round(wn, 2), round(xi, 4), ...
-    round(PO, 2), round(Tp, 4), round(Ts, 4), round(y_inf, 4), round(ess, 4), ...
-    'VariableNames', {'k_pedido', 'R7_R9', 'k_efectivo', 'wn_rad_s', 'xi', ...
-                      'PO_pct', 'Tp_s', 'Ts_s', 'y_inf', 'ess'});
+    round(PO, 2), round(Tp, 4), round(Ts_aprox, 4), round(Ts_exacto, 4), ...
+    round(y_inf, 4), round(ess, 4), ...
+    'VariableNames', {'k', 'R7_R9', 'k_ef', 'wn_rad_s', 'xi', ...
+                      'PO_pct', 'Tp_s', 'Ts_teor_s', 'Ts_stepinfo_s', 'y_inf', 'ess'});
 
 disp('=== TABLA PUNTO 4 ===');
 disp(Tabla_Punto4);
